@@ -18,8 +18,8 @@ void loop() {
   // Mapeando % según calibración
   // Valores altos = más seco
   // Valores bajos = más humedo
-  float humedad1 = map(valor1, 2600, 1020, 0, 100);
-  float humedad2 = map(valor2, 2600, 1080, 0, 100);
+  float humedad1 = map(valor1, 2750, 1340, 0, 100);
+  float humedad2 = map(valor2, 2750, 1270), 0, 100);
 
   // Saturar cada una a 0–100
   if (humedad1 < 0) humedad1 = 0;
