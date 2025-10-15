@@ -6,7 +6,8 @@
   la lectura ADC (0–3000 aprox.) en un porcentaje de 0–100 %
 */
 
-#define POTE_PIN1 35      // Pin analógico usado por el potenciómetro (GPIO35)
+// Definición del pin analógico usado por el potenciómetro
+#define POTE_PIN1 35      // GPIO35
 
 void setup() {
   Serial.begin(115200);   // Configura la velocidad de transmisión del puerto serie
