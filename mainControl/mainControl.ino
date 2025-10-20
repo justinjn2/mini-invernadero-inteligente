@@ -19,7 +19,7 @@
 #define POTE_TEMP   34   // Potenciómetro de referencia de temperatura
 #define POTE_HUM    35   // Potenciómetro de referencia de humedad
 #define BOMBA       25   // Salida digital que controla la bomba de riego
-#define SERVO       26   // Salida para servo o ventilador (control de temperatura futuro)
+#define SERVO       26   // Salida para servomotor que controla temperatura
 
 // Creación del objeto del sensor DHT
 DHT dht(DHTPIN, DHTTYPE);
