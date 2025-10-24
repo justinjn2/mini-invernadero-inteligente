@@ -47,16 +47,23 @@ float leerPoteTemp(int pin) {
 }
 
 // ---------- Servo (límites y movimiento) ----------
-const int ANG_ABIERTO = 80;
-const int ANG_CERRADO = 160;
+const int LIMITE_ABIERTO = 80;
+const int LIMITE_CERRADO = 160;
 bool ventanaAbierta = false;
+int anguloActual = LIMITE_CERRADO;
 
-void moverVentana(bool abrir) {
+void moverVentana(bool moverServo) {
+  if(moverServo && anguloActual > LIMITE_ABIERTO){
+    anguloActual -= 10;
+    if (anguloActual < LIMITE_ABIERTO) anguloActual = LIMITE_ABIERTO;
+  }else if(!moverServo && anguloActual < LIMITE_CERRADO){
+    anguloActual += 10;
+    if (anguloActual > LIMITE_CERRADO) anguloActual = LIMITE_CERRADO;
+  }
   servoVentana.attach(SERVO_PIN);
-  servoVentana.write(abrir ? ANG_ABIERTO : ANG_CERRADO);
+  servoVentana.write(anguloActual);
   delay(500);                  // breve para asegurar llegada
   servoVentana.detach();       // ahorro energía/ruido
-  ventanaAbierta = abrir;
 }
 
 // ---------- Timers ----------
@@ -81,7 +88,7 @@ void setup() {
 
   // Posición inicial segura del servo
   servoVentana.attach(SERVO_PIN);
-  servoVentana.write(ANG_CERRADO);
+  servoVentana.write(LIMITE_CERRADO);
   delay(300);
   servoVentana.detach();
   ventanaAbierta = false;
@@ -128,10 +135,10 @@ void loop() {
   // ---- Decisión de ventana (cada 5 min) con histéresis ----
   if (now >= tDecide) {
     if (!isnan(temp) && !isnan(tempRef)) {
-      if (!ventanaAbierta && temp >= tempRef) {
+      if (temp >= tempRef) {
         moverVentana(true);    // abrir
-        Serial.println("VENTANA ABIERTA");
-      } else if (ventanaAbierta && temp <= (tempRef - H_T)) {
+        Serial.println("VENTANA ABIERTA: "); Serial.print(anguloActual);
+      } else if (temp <= (tempRef - H_T)) {
         moverVentana(false);   // cerrar
         Serial.println("VENTANA CERRADA");
       }
