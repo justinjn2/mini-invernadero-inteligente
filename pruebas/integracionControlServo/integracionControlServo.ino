@@ -8,7 +8,8 @@
 
 // Librerías
 #include <Wire.h>               // Bus I2C
-#include "DHT.h"                // Sensor DHT
+#include "DHT.h"                // Sensor DHT22 (temperatura y humedad del aire)
+#include "esp_system.h"         // Funciones del sistema ESP32 (usada para reinicio)
 #include <ESP32Servo.h>         // Control de servomotor
 #include <LiquidCrystal_I2C.h>  // Pantalla LCD por I2C
 
@@ -55,6 +56,7 @@ float leerPoteTemp(int pin) {
   return constrain(tempRef, 17, 35);
 }
 
+
 // Muestra en la pantalla LCD valores de referencia, temperatura, 
 // medición de humedad del suelo y aire del sistema.
 void printer(float humRef, float humSuelo, float humAire, float tempRef, float temp) {
@@ -88,12 +90,11 @@ void moverVentana(bool moverServo) {
   int anguloRetenido = anguloActual;
   if(moverServo && anguloActual > LIMITE_ABIERTO){
     anguloActual -= 10;
-    if (anguloActual < LIMITE_ABIERTO) anguloActual = LIMITE_ABIERTO;
+    if (anguloActual <= LIMITE_ABIERTO) anguloActual = LIMITE_ABIERTO;
   }else if(!moverServo && anguloActual < LIMITE_CERRADO){
     anguloActual += 10;
-    if (anguloActual > LIMITE_CERRADO) anguloActual = LIMITE_CERRADO;
+    if (anguloActual >= LIMITE_CERRADO) anguloActual = LIMITE_CERRADO;
   }
-  if (anguloActual == anguloRetenido) return;
   servoVentana.attach(SERVO_PIN);
   servoVentana.write(anguloActual);
   delay(500);                  // breve para asegurar llegada
@@ -105,6 +106,7 @@ void moverVentana(bool moverServo) {
 const unsigned long TIME_POTE_SS = 600;
 const unsigned long TIME_LECT_SENSOR   = 3000;   // lecturas cada 3 s
 const unsigned long TIME_SERVO = 15UL * 1000UL;  // decisión cada 5 min => 5UL * 60UL * 1000UL
+const unsigned long TIME_REBOOT = 7UL * 24UL * 60UL * 60UL * 1000UL;  // reinicio ESP32 cada 7 días
 unsigned long timeLectSensor = 0, timeServo = 0, timeLectPote = 0;
 
 // Lecturas actuales
@@ -113,8 +115,7 @@ float humSuelo1 = NAN, humSuelo2 = NAN, humSueloProm = NAN;
 float humRef = NAN, tempRef = NAN;
 
 // Histeresis temperatura (evita abrir/cerrar seguido)
-const float H_T = 2.0;    // cierra si T <= tempRef - H_T
-const float h_T = 1.0;    // abre si T >= tempRef + h_t;
+const float H_T = 2.0;    // cierra si T <= tempRef - H_T y abre si T >= tempRef + H_T;
 
 void setup() {
   Serial.begin(115200);           // Inicializa la comunicación serie
@@ -128,6 +129,7 @@ void setup() {
   servoVentana.write(LIMITE_CERRADO);
   delay(2000);
   lcd.init();             // Inicializa el LCD
+  delay(1000);
   lcd.backlight();        // Enciende la retroiluminación
   lcd.clear();
   servoVentana.detach();
@@ -190,18 +192,19 @@ void loop() {
   // ---- Decisión de ventana (cada 5 min) con histéresis ----
   if (now >= timeServo) {
     if (!isnan(temp) && !isnan(tempRef)) {
-      if (temp >= (tempRef + h_T)) {
+      if (temp >= (tempRef + H_T)) {
         moverVentana(true);    // abrir
         Serial.print("VENTANA ABIERTA: "); 
         Serial.print(anguloActual);
         Serial.println(" grados |");
       } else if (temp <= (tempRef - H_T)) {
         moverVentana(false);   // cerrar
-        Serial.print("VENTANA CERRADA");
+        Serial.print("VENTANA CERRADA: ");
         Serial.print(anguloActual);
         Serial.println(" grados |");
       }
     }
     timeServo += TIME_SERVO;
   }
+  if (now >= TIME_REBOOT) esp_restart();;
 }
