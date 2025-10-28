@@ -125,6 +125,7 @@ void moverVentana(bool moverServo) {
   }
   // Activación del servomotor
   digitalWrite(SERVO_EN_PIN, LOW);    // Activa relay (alimenta el servo)
+  delay(1000);
   servoVentana.attach(SERVO_PIN);     // Activa señal PWM
   servoVentana.write(anguloActual);   // Mueve al nuevo ángulo
   Serial.println("PWM enviado |");
@@ -136,29 +137,29 @@ void moverVentana(bool moverServo) {
 // ============ Configuración inicial del sistema ============
 // Inicializa sensores, pantalla, actuadores y variables de tiempo.
 void setup() {
-  Serial.begin(115200);           // Inicializa la comunicación serie
-  //delay(2000);                    // Pausa para sincronizar el monitor
-  // --- Sensores / periféricos ---
-  dht.begin();                    // Inicializa el sensor DHT22
-  //delay(2000);
-  lcd.init();                     // Inicializa el LCD
-  //delay(1000);
-  lcd.backlight();                // Enciende la retroiluminación
-  lcd.clear();                    // Limpia la pantalla
+  Serial.begin(115200);   // Inicializa la comunicación serie
+  delay(2000);            // Pausa para sincronizar el monitor
 
-  // --- Actuadores / salidas ---
-  pinMode(BOMBA_PIN, OUTPUT);     // Configura el pin de la bomba como salida
-  pinMode(SERVO_EN_PIN, OUTPUT);  // Configura el pin que alimenta el servo como salida
-  digitalWrite(BOMBA_PIN, HIGH);  // Estado inicial: bomba desactivada
-  digitalWrite(SERVO_EN_PIN, HIGH);  // Estado inicial: servo desactivado
+  // Sensor DHT22 y Pantalla LCD 16x2 ----
+  dht.begin();            // Inicializa el sensor DHT22
+  lcd.init();             // Inicializa el LCD
+  lcd.backlight();        // Enciende la retroiluminación
+  lcd.clear();            // Limpia la pantalla
 
-  // Posición inicial segura del servo
+  // Actuadores y salidas-----------------
+  pinMode(BOMBA_PIN, OUTPUT);         // Configura el pin de la bomba como salida
+  pinMode(SERVO_EN_PIN, OUTPUT);      // Configura el pin que alimentación del servo como salida
+  digitalWrite(BOMBA_PIN, HIGH);      // Estado inicial: bomba desactivada
+  digitalWrite(SERVO_EN_PIN, LOW);    // Estado inicial: servo activado
+  delay(1000);                        // Espera para que servo servo se alimente
+  // Posición inicial segura del servo ---
   servoVentana.attach(SERVO_PIN);     // Habilita PWM del servo
   servoVentana.write(LIMITE_CERRADO); // Posición inicial del servo
-  delay(2000);                        // Espera a que alcance posición
+  delay(1000);                        // Espera a que servo alcance posición
   servoVentana.detach();              // Deshabilita PWM (ahorro de energía)
+  digitalWrite(SERVO_EN_PIN, HIGH);   // Apaga relay (corta energía al servo)
 
-  // --- Temporizadores iniciales ---
+  // Temporizadores iniciales-------------
   unsigned long now = millis();         // Tiempo actual desde el arranque del sistema (ms)
   timeLectSensor = now + TIME_LECT;     // Primera lectura de sensores
   timeLectPote   = now + TIME_POTE_SS;  // Primera lectura de potenciómetros
