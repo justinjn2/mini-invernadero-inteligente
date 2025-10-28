@@ -14,13 +14,14 @@
 #include <LiquidCrystal_I2C.h>  // Pantalla LCD por I2C
 
 // Pines
-#define DHT_PIN     27  // Entrada digital del sensor DHT22
-#define SENSOR_PIN1 32  // Entrada ADC de sensor1 de humedad de suelo
-#define SENSOR_PIN2 33  // Entrada ADC de sensor2 de humedad de suelo
-#define POTE_TEMP   34  // Entrada ADC de referencia de temperatura
-#define POTE_HUM    35  // Entrada ADC de referencia de humedad
-#define BOMBA_PIN   25  // Salida digital que controla la bomba
-#define SERVO_PIN   26  // Salida PWM para control de servomotor 
+#define DHT_PIN      27  // Entrada digital del sensor DHT22
+#define SENSOR_PIN1  32  // Entrada ADC de sensor1 de humedad de suelo
+#define SENSOR_PIN2  33  // Entrada ADC de sensor2 de humedad de suelo
+#define POTE_TEMP    34  // Entrada ADC de referencia de temperatura
+#define POTE_HUM     35  // Entrada ADC de referencia de humedad
+#define BOMBA_PIN    25  // Salida digital que controla la bomba
+#define SERVO_PIN    26  // Salida PWM para control de servomotor 
+#define SERVO_EN_PIN 14  // Salida digital que alimenta el servomotor
 
 // ========= Servo (límites y movimiento) =========
 const int LIMITE_ABIERTO = 80;        // Ángulo mínimo (ventana completamente abierta)
@@ -29,7 +30,7 @@ const int LIMITE_CERRADO = 160;       // Ángulo máximo (ventana completamente 
 // ========== Temporizadores del sistema ==========
 const unsigned long TIME_POTE_SS = 600;             // Lectura de potenciómetros cada 0.6 s
 const unsigned long TIME_LECT    = 3000;            // Lectura de sensores cada 3 s
-const unsigned long TIME_SERVO   = 6UL * 1000UL;   // Decisión de servo cada 15 s
+const unsigned long TIME_SERVO   = 9UL * 1000UL;   // Decisión de servo cada 15 s
 const unsigned long TIME_REBOOT  = 7UL * 24UL * 60UL * 60UL * 1000UL; // reinicio ESP32 cada 7 días
 
 // =========== Instancias de las clases ===========
@@ -123,11 +124,13 @@ void moverVentana(bool moverServo) {
     Serial.print(" grados |");
   }
   // Activación del servomotor
+  digitalWrite(RELAY_SERVO, LOW);     // Activa relay (alimenta el servo)
   servoVentana.attach(SERVO_PIN);     // Activa señal PWM
   servoVentana.write(anguloActual);   // Mueve al nuevo ángulo
   Serial.println("PWM enviado |");
   delay(500);                         // Breve para asegurar llegada
   servoVentana.detach();              // Corta PWM (ahorra energía y ruido)
+  digitalWrite(RELAY_SERVO, HIGH);    // Apaga relay (corta energía al servo)
 }
 
 // ============ Configuración inicial del sistema ============
@@ -145,7 +148,9 @@ void setup() {
 
   // --- Actuadores / salidas ---
   pinMode(BOMBA_PIN, OUTPUT);     // Configura el pin de la bomba como salida
+  pinMode(SERVO_EN_PIN, OUTPUT);  // Configura el pin que alimenta el servo como salida
   digitalWrite(BOMBA_PIN, HIGH);  // Estado inicial: bomba desactivada
+  digitalWrite(SERVO_EN_PIN, HIGH);  // Estado inicial: servo desactivado
 
   // Posición inicial segura del servo
   servoVentana.attach(SERVO_PIN);     // Habilita PWM del servo
@@ -220,7 +225,7 @@ void loop() {
     }
     timeServo += TIME_SERVO;      // Tiempo de siguiente movimiento del servo
   }
-  
+
   // ===== Reinicio del ESP32 cada 7 días =====
   if (now >= TIME_REBOOT) esp_restart();
 }
