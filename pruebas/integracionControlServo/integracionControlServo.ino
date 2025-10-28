@@ -124,13 +124,13 @@ void moverVentana(bool moverServo) {
     Serial.print(" grados |");
   }
   // Activación del servomotor
-  digitalWrite(RELAY_SERVO, LOW);     // Activa relay (alimenta el servo)
+  digitalWrite(SERVO_EN_PIN, LOW);    // Activa relay (alimenta el servo)
   servoVentana.attach(SERVO_PIN);     // Activa señal PWM
   servoVentana.write(anguloActual);   // Mueve al nuevo ángulo
   Serial.println("PWM enviado |");
   delay(500);                         // Breve para asegurar llegada
   servoVentana.detach();              // Corta PWM (ahorra energía y ruido)
-  digitalWrite(RELAY_SERVO, HIGH);    // Apaga relay (corta energía al servo)
+  digitalWrite(SERVO_EN_PIN, HIGH);   // Apaga relay (corta energía al servo)
 }
 
 // ============ Configuración inicial del sistema ============
